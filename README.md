@@ -14,6 +14,16 @@ cd .\dist\ProductivityTrackerLite
 .\ProductivityTracker.App.exe
 ```
 
+## Screenshots
+
+### Dashboard
+![Dashboard](docs/screenshots/dashboard.png)
+
+### Quick Add Task
+![Quick Add Task](docs/screenshots/quick-add.png)
+
+### Dashboard (Alternate View)
+![Dashboard Alternate](docs/screenshots/dashboard-2.png)
 ## GitHub Templates Included
 
 - Bug report template: `.github/ISSUE_TEMPLATE/bug_report.yml`
@@ -485,6 +495,7 @@ Example manifest (`productivity-update.json`):
   "notes": "Bug fixes and performance improvements"
 }
 ```
+
 
 
 
