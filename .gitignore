@@ -1,0 +1,28 @@
+# Build outputs
+bin/
+obj/
+_publish_min/
+dist/
+
+# IDE
+.vs/
+.vscode/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Logs and local runtime data
+*.log
+ErrorLogs/
+
+# OS files
+Thumbs.db
+Desktop.ini
+
+# App local data snapshots
+ProductivityTrackerLite/
+
+# NuGet
+*.nupkg
+*.snupkg
