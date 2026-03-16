@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Globalization;
 using System.Text;
 using System.Windows.Threading;
 using ProductivityTracker.App.Helpers;
@@ -17,6 +18,7 @@ public sealed class ActivityTrackerService
     private DateTime _segmentStart;
     private string _lastActivity = "Unknown";
     private bool _lastWasIdle;
+    private bool _runtimePaused;
     private IdleSession? _activeIdleSession;
 
     private static readonly HashSet<string> CodingApps =
@@ -34,6 +36,8 @@ public sealed class ActivityTrackerService
         _settings = settings;
         _currentDay = _storage.LoadActivity(DateOnly.FromDateTime(DateTime.Today));
         _segmentStart = DateTime.Now;
+        _runtimePaused = _settings.TrackingPaused || !IsWithinTrackingWindow(DateTime.Now);
+        _lastActivity = _runtimePaused ? (_settings.TrackingPaused ? "Paused" : "Outside Schedule") : "Unknown";
 
         _timer = new DispatcherTimer();
         _timer.Tick += (_, _) => TrackTick();
@@ -44,7 +48,7 @@ public sealed class ActivityTrackerService
 
     public event Action? ActivityUpdated;
 
-    public bool IsPaused => _settings.TrackingPaused;
+    public bool IsPaused => _runtimePaused;
 
     public DailyActivityData Snapshot()
     {
@@ -75,13 +79,32 @@ public sealed class ActivityTrackerService
         _customRules = ParseRules(_settings.AppCategoryRulesText);
     }
 
+    public void RefreshTrackingWindow()
+    {
+        DateTime now = DateTime.Now;
+        bool newPaused = _settings.TrackingPaused || !IsWithinTrackingWindow(now);
+        if (newPaused == _runtimePaused)
+        {
+            return;
+        }
+
+        FlushCurrentSegment(now);
+        _runtimePaused = newPaused;
+        _segmentStart = now;
+        _lastWasIdle = false;
+        _lastActivity = _runtimePaused ? (_settings.TrackingPaused ? "Paused" : "Outside Schedule") : _lastActivity;
+        Persist();
+        ActivityUpdated?.Invoke();
+    }
+
     public void SetPaused(bool paused)
     {
         DateTime now = DateTime.Now;
         FlushCurrentSegment(now);
         _settings.TrackingPaused = paused;
+        _runtimePaused = _settings.TrackingPaused || !IsWithinTrackingWindow(now);
         _segmentStart = now;
-        _lastActivity = paused ? "Paused" : _lastActivity;
+        _lastActivity = _runtimePaused ? (_settings.TrackingPaused ? "Paused" : "Outside Schedule") : _lastActivity;
         _lastWasIdle = false;
         Persist();
         ActivityUpdated?.Invoke();
@@ -105,10 +128,21 @@ public sealed class ActivityTrackerService
         DateTime now = DateTime.Now;
         EnsureDay(now);
 
-        if (_settings.TrackingPaused)
+        bool schedulePaused = !IsWithinTrackingWindow(now);
+        bool newRuntimePaused = _settings.TrackingPaused || schedulePaused;
+
+        if (newRuntimePaused != _runtimePaused)
+        {
+            FlushCurrentSegment(now);
+            _runtimePaused = newRuntimePaused;
+            _segmentStart = now;
+            _lastWasIdle = false;
+        }
+
+        if (_runtimePaused)
         {
             _segmentStart = now;
-            _lastActivity = "Paused";
+            _lastActivity = _settings.TrackingPaused ? "Paused" : "Outside Schedule";
             _lastWasIdle = false;
             ActivityUpdated?.Invoke();
             return;
@@ -181,7 +215,7 @@ public sealed class ActivityTrackerService
             return;
         }
 
-        if (_settings.TrackingPaused)
+        if (_runtimePaused)
         {
             return;
         }
@@ -312,6 +346,43 @@ public sealed class ActivityTrackerService
         int idleSeconds = Math.Max(0, millis / 1000);
         int threshold = Math.Max(1, _settings.IdleThresholdMinutes) * 60;
         return (idleSeconds >= threshold, idleSeconds);
+    }
+
+    private bool IsWithinTrackingWindow(DateTime now)
+    {
+        TimeSpan start = ParseWindowTime(_settings.BackgroundStartTime, new TimeSpan(9, 0, 0));
+        TimeSpan stop = ParseWindowTime(_settings.BackgroundStopTime, new TimeSpan(19, 0, 0));
+        TimeSpan current = now.TimeOfDay;
+
+        if (start == stop)
+        {
+            return true;
+        }
+
+        if (start < stop)
+        {
+            return current >= start && current <= stop;
+        }
+
+        // Overnight window (e.g. 10:00 PM -> 06:00 AM)
+        return current >= start || current <= stop;
+    }
+
+    private static TimeSpan ParseWindowTime(string? value, TimeSpan fallback)
+    {
+        string text = (value ?? string.Empty).Trim();
+
+        if (DateTime.TryParseExact(text, new[] { "h:mm tt", "hh:mm tt", "H:mm", "HH:mm" }, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime dt))
+        {
+            return dt.TimeOfDay;
+        }
+
+        if (DateTime.TryParse(text, CultureInfo.InvariantCulture, DateTimeStyles.None, out dt))
+        {
+            return dt.TimeOfDay;
+        }
+
+        return fallback;
     }
 
     private static string GetActiveApplicationLabel()

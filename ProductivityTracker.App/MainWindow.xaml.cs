@@ -109,6 +109,7 @@ public partial class MainWindow : Window
             _startupHealthy = startup.RegistryRunConfigured || startup.StartupFolderConfigured;
             int cleaned = _retentionService.Apply(_settings);
 
+            _activityService.RefreshTrackingWindow();
             _trayService.SetPauseState(_settings.TrackingPaused);
             UpdatePauseButtonText();
             RefreshDashboard();
@@ -329,6 +330,8 @@ public partial class MainWindow : Window
         _settings.DueReminder5MinEnabled = window.Result.DueReminder5MinEnabled;
         _settings.DueCheckIntervalSeconds = window.Result.DueCheckIntervalSeconds;
         _settings.ActivityTrackingIntervalSeconds = window.Result.ActivityTrackingIntervalSeconds;
+        _settings.BackgroundStartTime = window.Result.BackgroundStartTime;
+        _settings.BackgroundStopTime = window.Result.BackgroundStopTime;
         _settings.AppCategoryRulesText = window.Result.AppCategoryRulesText;
         _settings.RetentionEnabled = window.Result.RetentionEnabled;
         _settings.RetentionActivityDays = window.Result.RetentionActivityDays;
@@ -351,6 +354,7 @@ public partial class MainWindow : Window
         _storage.SaveSettings(_settings);
         _screenshotService.RefreshInterval();
         _activityService.RefreshSamplingInterval();
+        _activityService.RefreshTrackingWindow();
         _activityService.RefreshRules();
         UpdateDueAlertTimerInterval();
         _trayService.SetPauseState(_settings.TrackingPaused);
@@ -470,7 +474,7 @@ public partial class MainWindow : Window
         _vm.ProductivityScore = ComputeTaskBasedScore(summary.Total, pointSummary.GoodCount, pointSummary.NeutralCount, pointSummary.BadCount);
         _vm.AiSuggestion = BuildSuggestion(activity);
 
-        _vm.HealthTracking = _settings.TrackingPaused ? "Tracking: Paused" : "Tracking: Running";
+        _vm.HealthTracking = _activityService.IsPaused ? "Tracking: Paused" : "Tracking: Running";
         _vm.HealthHotkeys = _hotkeysHealthy ? "Hotkeys: OK" : "Hotkeys: Recovering";
         _vm.HealthStartup = _startupHealthy ? "Startup: OK" : "Startup: Needs attention";
 
@@ -711,6 +715,8 @@ public partial class MainWindow : Window
         _vm.StatusText = "Dashboard closed. Tracker is running in background (system tray).";
     }
 }
+
+
 
 
 

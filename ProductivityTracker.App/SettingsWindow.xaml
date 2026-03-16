@@ -101,6 +101,21 @@
 
                 <Separator Margin="0,14,0,10" />
 
+                <TextBlock Text="Tracking Schedule" FontSize="18" FontWeight="SemiBold" />
+                <TextBlock Text="Tracker records activity only within this time range." Foreground="#9FB3CF" Margin="0,4,0,6" />
+                <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                    <TextBlock Text="Background start time:" Width="320" FontSize="16" />
+                    <TextBox x:Name="BackgroundStartTimeTextBox" Width="160" Margin="8,0,0,0" />
+                    <TextBlock Text="(Example: 09:00 AM)" Margin="12,0,0,0" Foreground="#9FB3CF" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                    <TextBlock Text="Background stop time:" Width="320" FontSize="16" />
+                    <TextBox x:Name="BackgroundStopTimeTextBox" Width="160" Margin="8,0,0,0" />
+                    <TextBlock Text="(Example: 07:00 PM)" Margin="12,0,0,0" Foreground="#9FB3CF" />
+                </StackPanel>
+
+                <Separator Margin="0,14,0,10" />
+
                 <TextBlock Text="Due Alerts" FontSize="18" FontWeight="SemiBold" />
                 <CheckBox x:Name="DueSoundEnabledCheckBox" Content="Enable due alert sound" />
                 <CheckBox x:Name="DueTrayBalloonEnabledCheckBox" Content="Enable due alert tray balloon" />

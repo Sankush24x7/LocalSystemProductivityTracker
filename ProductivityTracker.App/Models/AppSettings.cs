@@ -16,6 +16,10 @@ public sealed class AppSettings
     public int ActivityTrackingIntervalSeconds { get; set; } = 5;
     public bool TrackingPaused { get; set; }
 
+    // Daily tracking window (local time). Default: 09:00 AM to 07:00 PM.
+    public string BackgroundStartTime { get; set; } = "09:00 AM";
+    public string BackgroundStopTime { get; set; } = "07:00 PM";
+
     // One rule per line: token=Category (Category: Coding/Browsing/Other)
     public string AppCategoryRulesText { get; set; } = "devenv=Coding\ncode=Coding\nchrome=Browsing\nmsedge=Browsing\npowershell=Coding";
 

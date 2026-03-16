@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 using ProductivityTracker.App.Models;
@@ -47,6 +48,8 @@ public partial class SettingsWindow : Window
         SmtpSslCheckBox.IsChecked = settings.SmtpUseSsl;
 
         BackupPasswordBox.Password = settings.BackupPassword;
+        BackgroundStartTimeTextBox.Text = NormalizeTimeText(settings.BackgroundStartTime, "09:00 AM");
+        BackgroundStopTimeTextBox.Text = NormalizeTimeText(settings.BackgroundStopTime, "07:00 PM");
 
         SelectDueInterval(settings.DueCheckIntervalSeconds);
         SelectActivityInterval(settings.ActivityTrackingIntervalSeconds);
@@ -98,6 +101,8 @@ public partial class SettingsWindow : Window
             DueCheckIntervalSeconds = dueInterval,
             ActivityTrackingIntervalSeconds = activityInterval,
             TrackingPaused = _original.TrackingPaused,
+            BackgroundStartTime = NormalizeTimeText(BackgroundStartTimeTextBox.Text, "09:00 AM"),
+            BackgroundStopTime = NormalizeTimeText(BackgroundStopTimeTextBox.Text, "07:00 PM"),
             AppCategoryRulesText = CategoryRulesTextBox.Text,
             RetentionEnabled = RetentionEnabledCheckBox.IsChecked == true,
             RetentionActivityDays = retentionActivity,
@@ -160,6 +165,27 @@ public partial class SettingsWindow : Window
         }
 
         return string.Empty;
+    }
+
+    private static string NormalizeTimeText(string? input, string fallback)
+    {
+        if (!TryParseTime(input, out DateTime value))
+        {
+            TryParseTime(fallback, out value);
+        }
+
+        return value.ToString("hh:mm tt", CultureInfo.InvariantCulture);
+    }
+
+    private static bool TryParseTime(string? input, out DateTime value)
+    {
+        string text = (input ?? string.Empty).Trim();
+        if (DateTime.TryParseExact(text, new[] { "h:mm tt", "hh:mm tt", "H:mm", "HH:mm" }, CultureInfo.InvariantCulture, DateTimeStyles.None, out value))
+        {
+            return true;
+        }
+
+        return DateTime.TryParse(text, CultureInfo.InvariantCulture, DateTimeStyles.None, out value);
     }
 
     private static int ParseOrDefault(string? input, int fallback, int min, int max)

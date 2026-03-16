@@ -240,6 +240,15 @@ Copied distribution output:
 - Supported values in UI: `1, 2, 5, 10, 30, 60`.
 - Lower values give finer detail but larger activity JSON files.
 
+
+### `BackgroundStartTime` (string)
+- Daily background tracking start time in local machine time.
+- Default: `09:00 AM`.
+
+### `BackgroundStopTime` (string)
+- Daily background tracking stop time in local machine time.
+- Default: `07:00 PM`.
+- Outside this window, activity tracking auto-pauses by schedule and auto-resumes when start time is reached.
 ### `DueSoundEnabled` (bool)
 - Controls sound alert when a task reaches/passes due datetime.
 - `true`: system alert sound plays.
@@ -495,6 +504,7 @@ Example manifest (`productivity-update.json`):
   "notes": "Bug fixes and performance improvements"
 }
 ```
+
 
 
 
